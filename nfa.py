@@ -42,14 +42,75 @@ class NFA:
         self.transitions.setdefault(src, {}).setdefault(symbol, set()).add(dst)
 
 
+def _build_fragment(nfa: NFA, ast: Node) -> NFAFragment:
+    """Recursively build a Thompson fragment for an AST subtree.
+
+    For each AST node kind, returns a fragment with entry and exit states.
+    Fragments are combined using epsilon transitions where needed.
+    """
+    if ast.kind == "literal":
+        start = nfa.new_state()
+        final = nfa.new_state()
+        nfa.add_transition(start, ast.value, final)
+        return NFAFragment(start, final)
+
+    if ast.kind == "union":
+        if ast.left is None or ast.right is None:
+            raise ValueError("Union node must have two children.")
+
+        left_frag = _build_fragment(nfa, ast.left)
+        right_frag = _build_fragment(nfa, ast.right)
+
+        start = nfa.new_state()
+        final = nfa.new_state()
+
+        nfa.add_transition(start, EPSILON, left_frag.start_state)
+        nfa.add_transition(start, EPSILON, right_frag.start_state)
+        nfa.add_transition(left_frag.final_state, EPSILON, final)
+        nfa.add_transition(right_frag.final_state, EPSILON, final)
+
+        return NFAFragment(start, final)
+
+    if ast.kind == "concat":
+        if ast.left is None or ast.right is None:
+            raise ValueError("Concat node must have two children.")
+
+        left_frag = _build_fragment(nfa, ast.left)
+        right_frag = _build_fragment(nfa, ast.right)
+
+        nfa.add_transition(left_frag.final_state, EPSILON, right_frag.start_state)
+        return NFAFragment(left_frag.start_state, right_frag.final_state)
+
+    if ast.kind == "star":
+        if ast.left is None:
+            raise ValueError("Star node must have a left child.")
+
+        child_frag = _build_fragment(nfa, ast.left)
+
+        start = nfa.new_state()
+        final = nfa.new_state()
+
+        nfa.add_transition(start, EPSILON, child_frag.start_state)
+        nfa.add_transition(start, EPSILON, final)
+        nfa.add_transition(child_frag.final_state, EPSILON, child_frag.start_state)
+        nfa.add_transition(child_frag.final_state, EPSILON, final)
+
+        return NFAFragment(start, final)
+
+    raise ValueError(f"Unsupported AST node kind: {ast.kind}")
+
+
 def build_nfa_from_ast(ast: Node) -> NFA:
     """Build an epsilon-NFA from an AST using Thompson construction.
 
-    TODO:
-    - Implement recursive fragment construction for literal, union, concat, star.
-    - Wire fragment entry/exit states with epsilon transitions.
-    - Finalize `start_state`, `final_states`, and transition table.
+    Steps:
+    1. Create a new NFA object
+    2. Recursively build fragments for the entire AST
+    3. Set the start state and final states
+    4. Return the complete NFA
     """
-    raise NotImplementedError(
-        "Thompson construction skeleton is in place, but build_nfa_from_ast() is not implemented yet."
-    )
+    nfa = NFA()
+    root_fragment = _build_fragment(nfa, ast)
+    nfa.start_state = root_fragment.start_state
+    nfa.final_states.add(root_fragment.final_state)
+    return nfa

@@ -21,32 +21,88 @@ class DFA:
 def epsilon_closure(nfa: NFA, states: set[int] | frozenset[int]) -> frozenset[int]:
     """Return the epsilon-closure of a set of NFA states.
 
-    TODO:
-    - Implement DFS/BFS over epsilon transitions.
-    - Reuse this in subset construction without duplicating traversal logic.
+    Uses BFS to traverse all epsilon transitions from the given states.
     """
-    raise NotImplementedError("epsilon_closure() is not implemented yet.")
+    from nfa import EPSILON
+    
+    closure: set[int] = set(states)
+    queue: list[int] = list(states)
+    
+    while queue:
+        state = queue.pop(0)
+        if state not in nfa.transitions:
+            continue
+        if EPSILON not in nfa.transitions[state]:
+            continue
+        
+        for next_state in nfa.transitions[state][EPSILON]:
+            if next_state not in closure:
+                closure.add(next_state)
+                queue.append(next_state)
+    
+    return frozenset(closure)
 
 
 def move(nfa: NFA, states: set[int] | frozenset[int], symbol: str) -> frozenset[int]:
     """Return all NFA states reachable by one symbol transition.
 
-    TODO:
-    - Collect transitions from each source state for the given symbol.
-    - Keep output compatible with `epsilon_closure()` and subset construction.
+    Collects transitions from each source state for the given symbol.
     """
-    raise NotImplementedError("move() is not implemented yet.")
+    result: set[int] = set()
+    for state in states:
+        if state not in nfa.transitions:
+            continue
+        if symbol not in nfa.transitions[state]:
+            continue
+        result.update(nfa.transitions[state][symbol])
+    
+    return frozenset(result)
 
 
 def nfa_to_dfa(nfa: NFA) -> DFA:
     """Convert an epsilon-NFA to a DFA using subset construction.
 
-    TODO:
-    - Use frozenset-based DFA states.
-    - Track discovered subsets with a work queue.
-    - Mark final states when a subset contains an NFA final state.
+    Algorithm:
+    1. Start with the epsilon-closure of the NFA start state
+    2. Maintain a worklist of DFA states to process
+    3. For each DFA state and each symbol, compute the next DFA state
+    4. Mark DFA states as final if they contain any NFA final state
     """
-    raise NotImplementedError("nfa_to_dfa() is not implemented yet.")
+    if nfa.start_state is None:
+        raise ValueError("NFA must have a start state")
+    
+    dfa = DFA()
+    dfa.alphabet = nfa.alphabet.copy()
+    
+    start_closure = epsilon_closure(nfa, {nfa.start_state})
+    dfa.start_state = start_closure
+    
+    worklist: list[frozenset[int]] = [start_closure]
+    processed: set[frozenset[int]] = set()
+    
+    while worklist:
+        current_nfa_states = worklist.pop(0)
+        if current_nfa_states in processed:
+            continue
+        processed.add(current_nfa_states)
+        
+        dfa.states.add(current_nfa_states)
+        
+        if any(nfa_state in nfa.final_states for nfa_state in current_nfa_states):
+            dfa.final_states.add(current_nfa_states)
+        
+        for symbol in sorted(dfa.alphabet):
+            next_nfa_states = move(nfa, current_nfa_states, symbol)
+            if not next_nfa_states:
+                continue
+            next_closure = epsilon_closure(nfa, next_nfa_states)
+            
+            dfa.transitions.setdefault(current_nfa_states, {})[symbol] = next_closure
+            
+            if next_closure not in processed:
+                worklist.append(next_closure)
+    
+    return dfa
 
 
 def remove_unreachable_states(dfa: DFA) -> DFA:
