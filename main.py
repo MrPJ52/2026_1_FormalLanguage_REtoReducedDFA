@@ -23,9 +23,9 @@ def _run_stage(stage_name: str, action):
 def _print_ast_metrics(ast: Node) -> None:
 	"""Print basic AST-derived metrics used later by Thompson construction."""
 	print(f"AST size: {ast.size()}")
-	states, arcs = ast.count_thompson_states_arcs()
-	print(f"Estimated Thompson states: {states}")
-	print(f"Estimated Thompson arcs: {arcs}")
+	arc_bound, arc_exact = ast.count_arcs()
+	print(f"Arc upper bound: {arc_bound}")
+	print(f"Exact arc count: {arc_exact}")
 
 
 def main() -> None:

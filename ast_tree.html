@@ -44,7 +44,7 @@
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script>
-        const data = {"name": "union (+)", "children": [{"name": "union (+)", "children": [{"name": "concat (·)", "children": [{"name": "literal: a", "children": []}, {"name": "literal: A", "children": []}]}, {"name": "literal: b", "children": []}]}, {"name": "concat (·)", "children": [{"name": "literal: 0", "children": []}, {"name": "star (*)", "children": [{"name": "literal: c", "children": []}]}]}]};
+        const data = {"name": "concat (·)", "children": [{"name": "literal: a", "children": []}, {"name": "star (*)", "children": [{"name": "union (+)", "children": [{"name": "literal: b", "children": []}, {"name": "literal: c", "children": []}]}]}]};
 
         const svg = d3.select('#tree');
         const width = window.innerWidth;

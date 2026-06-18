@@ -86,7 +86,7 @@ AST 노드 자료구조.
 - `Node`
 - `size()`
 - `to_nested_list()`
-- `count_thompson_states_arcs()`
+- `count_arcs()`
 
 ### nfa.py
 

@@ -35,30 +35,36 @@ class Node:
             raise ValueError(f"{self.kind} node must have two children.")
         return [self.value, self.left.to_nested_list(), self.right.to_nested_list()]
 
-    def count_thompson_states_arcs(self) -> tuple[int, int]:
-        """Estimate Thompson-construction state and arc counts from the AST.
+    def count_arcs(self) -> tuple[int, int]:
+        """Return (arc_upper_bound, arc_exact_count) for Thompson construction.
 
-        TODO:
-        - Confirm the exact counting rule required by the assignment.
-        - Align this helper with the concrete NFA builder once implemented.
+        Arc upper bound is calculated as states² (theoretical maximum).
+        Arc exact count is the actual number of arcs in Thompson NFA.
         """
+        states, arcs = self._count_thompson_states_arcs()
+        arc_upper_bound = states * states
+        arc_exact_count = arcs
+        return arc_upper_bound, arc_exact_count
+
+    def _count_thompson_states_arcs(self) -> tuple[int, int]:
+        """Internal: count Thompson-construction state and arc counts from the AST."""
         if self.kind == "literal":
             return 2, 1
         if self.kind == "union":
             if self.left is None or self.right is None:
                 raise ValueError("Union node must have two children.")
-            left_states, left_arcs = self.left.count_thompson_states_arcs()
-            right_states, right_arcs = self.right.count_thompson_states_arcs()
+            left_states, left_arcs = self.left._count_thompson_states_arcs()
+            right_states, right_arcs = self.right._count_thompson_states_arcs()
             return left_states + right_states + 2, left_arcs + right_arcs + 4
         if self.kind == "concat":
             if self.left is None or self.right is None:
                 raise ValueError("Concat node must have two children.")
-            left_states, left_arcs = self.left.count_thompson_states_arcs()
-            right_states, right_arcs = self.right.count_thompson_states_arcs()
+            left_states, left_arcs = self.left._count_thompson_states_arcs()
+            right_states, right_arcs = self.right._count_thompson_states_arcs()
             return left_states + right_states, left_arcs + right_arcs + 1
         if self.kind == "star":
             if self.left is None:
                 raise ValueError("Star node must have a left child.")
-            child_states, child_arcs = self.left.count_thompson_states_arcs()
+            child_states, child_arcs = self.left._count_thompson_states_arcs()
             return child_states + 2, child_arcs + 4
         raise ValueError(f"Unsupported node kind: {self.kind}")

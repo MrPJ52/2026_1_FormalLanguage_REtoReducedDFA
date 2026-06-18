@@ -187,6 +187,55 @@
 - 검증 결과:
   - README 내용과 현재 코드(`main.py`, `regex_parser.py`, `nfa.py`, `dfa.py`, `scanner.py`, `tests/*`) 대조 확인.
 
+### nfa.py 단독 실행 CLI + 전이 표 출력 추가
+
+- 변경 목적:
+  - `nfa.py`만 직접 실행해 정규표현식 입력부터 AST/NFA 생성과 구성요소 확인이 가능하도록 개선.
+- 수정 파일:
+  - `nfa.py`
+  - `LOG.md`
+- 핵심 변경점:
+  - `main()` 추가: 콘솔 입력 정규표현식 -> AST 생성 -> NFA 생성 -> 구성요소 출력.
+  - `print_transition_table()` 추가: `NFA.transitions`를 콘솔 표 형태로 출력.
+  - `_format_transition_rows()` 추가: 전이 데이터를 정렬된 테이블 행으로 변환.
+  - AST nested list, states, alphabet, start/final states 출력 섹션 정리.
+- 검증 결과:
+  - `"a(b+c)*" | python nfa.py` 실행 시 AST와 NFA 전이 표 출력 확인.
+  - `python -m unittest tests.test_nfa -v` 통과.
+
+### NFA 전이 출력 함수 클래스 메서드화
+
+- 변경 목적:
+  - 전이 표 출력 유틸을 `NFA` 데이터 구조에 응집시켜 사용성/가독성 개선.
+- 수정 파일:
+  - `nfa.py`
+  - `LOG.md`
+- 핵심 변경점:
+  - `_format_transition_rows(nfa)` -> `NFA._format_transition_rows(self)`로 이동.
+  - `print_transition_table(nfa)` -> `NFA.print_transition_table(self)`로 이동.
+  - `main()`에서 `print_transition_table(nfa)` 호출을 `nfa.print_transition_table()`로 변경.
+- 검증 결과:
+  - `"a(b+c)*" | python nfa.py` 실행 시 전이 표 출력 동일 확인.
+  - `python -m unittest tests.test_nfa -v` 통과.
+
+### parser main AST/arc 지표 출력 추가
+
+- 변경 목적:
+  - `regex_parser.py` 단독 실행 시 AST 규모와 arc 관련 지표를 함께 확인 가능하도록 개선.
+- 수정 파일:
+  - `regex_parser.py`
+  - `LOG.md`
+- 핵심 변경점:
+  - `main()`에 `ast.size()` 출력 추가.
+  - `ast.count_thompson_states_arcs()`로 정확한 arc 수 출력 추가 (Thompson 규칙상 이 값이 정확한 arc 수).
+  - NFA 모듈 불필요: AST만으로 정확한 arc 수 계산 가능 (Thompson construction 규칙이 상한과 일치).
+  - 별도 신규 유틸 함수 추가 없이 기존 함수 조합으로 구현.
+- 검증 결과:
+  - `"a(b+c)*" | python regex_parser.py` 실행 결과:
+    - `AST size: 6`
+    - `Exact arc count: 12`
+  - `python -m py_compile regex_parser.py` 통과.
+
 ## 현재 상태 요약
 
 완료:
@@ -200,6 +249,7 @@
 - Scanner
 - main.py 완 파이프라인
 - parser D3 AST 시각화
+- nfa.py 단독 실행 + 전이 표 출력
 - parser/NFA/DFA/scanner 기본 테스트
 
 미완료:

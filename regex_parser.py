@@ -290,6 +290,13 @@ def main() -> None:
     print("AST (nested list):")
     print(ast.to_nested_list())
 
+    ast_size = ast.size()
+    arc_bound, arc_exact = ast.count_arcs()
+
+    print(f"AST size: {ast_size}")
+    print(f"Arc upper bound: {arc_bound}")
+    print(f"Exact arc count: {arc_exact}")
+
     output_path = Path(__file__).with_name("ast_tree.html")
     generated = generate_d3_ast_html(ast, output_path)
     print(f"D3 AST HTML generated: {generated}")

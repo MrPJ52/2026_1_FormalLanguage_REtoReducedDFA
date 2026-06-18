@@ -41,6 +41,42 @@ class NFA:
             self.alphabet.add(symbol)
         self.transitions.setdefault(src, {}).setdefault(symbol, set()).add(dst)
 
+    def _format_transition_rows(self) -> list[tuple[str, str, str]]:
+        """Return sorted transition rows as string tuples for table rendering."""
+        rows: list[tuple[str, str, str]] = []
+        for src in sorted(self.transitions):
+            for symbol in sorted(self.transitions[src], key=lambda item: (item != EPSILON, item)):
+                dst_states = sorted(self.transitions[src][symbol])
+                dst_text = "{" + ", ".join(str(state) for state in dst_states) + "}"
+                rows.append((str(src), symbol, dst_text))
+        return rows
+
+    def print_transition_table(self) -> None:
+        """Print NFA transitions as a plain text table."""
+        rows = self._format_transition_rows()
+        if not rows:
+            print("(no transitions)")
+            return
+
+        header = ("SRC", "SYMBOL", "DST")
+        src_width = max(len(header[0]), *(len(row[0]) for row in rows))
+        symbol_width = max(len(header[1]), *(len(row[1]) for row in rows))
+        dst_width = max(len(header[2]), *(len(row[2]) for row in rows))
+
+        border = f"+-{'-' * src_width}-+-{'-' * symbol_width}-+-{'-' * dst_width}-+"
+        header_line = (
+            f"| {header[0].ljust(src_width)} | "
+            f"{header[1].ljust(symbol_width)} | "
+            f"{header[2].ljust(dst_width)} |"
+        )
+
+        print(border)
+        print(header_line)
+        print(border)
+        for src, symbol, dst in rows:
+            print(f"| {src.ljust(src_width)} | {symbol.ljust(symbol_width)} | {dst.ljust(dst_width)} |")
+        print(border)
+
 
 def _build_fragment(nfa: NFA, ast: Node) -> NFAFragment:
     """Recursively build a Thompson fragment for an AST subtree.
@@ -114,3 +150,34 @@ def build_nfa_from_ast(ast: Node) -> NFA:
     nfa.start_state = root_fragment.start_state
     nfa.final_states.add(root_fragment.final_state)
     return nfa
+
+
+def main() -> None:
+    """Run NFA demo: regex input -> AST build -> NFA build -> print components."""
+    from regex_parser import parse_regex
+
+    print("Thompson NFA demo")
+    regex = input("Enter regular expression: ").strip()
+
+    try:
+        ast = parse_regex(regex)
+        nfa = build_nfa_from_ast(ast)
+    except ValueError as exc:
+        print(f"Build error: {exc}")
+        return
+
+    print("\n=== AST (nested list) ===")
+    print(ast.to_nested_list())
+
+    print("\n=== NFA Components ===")
+    print(f"States: {sorted(nfa.states)}")
+    print(f"Alphabet: {sorted(nfa.alphabet)}")
+    print(f"Start state: {nfa.start_state}")
+    print(f"Final states: {sorted(nfa.final_states)}")
+
+    print("\n=== NFA Transition Table ===")
+    nfa.print_transition_table()
+
+
+if __name__ == "__main__":
+    main()
