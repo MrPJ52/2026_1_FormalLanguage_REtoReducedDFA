@@ -266,3 +266,60 @@ def rename_dfa_states(dfa: DFA) -> DFA:
             renamed.transitions.setdefault(new_src, {})[symbol] = new_dst
 
     return renamed
+
+
+def _print_nfa_summary(nfa: NFA) -> None:
+    """Print epsilon-NFA components and transition table."""
+    print("\n=== e-NFA Components ===")
+    print(f"States: {sorted(nfa.states)}")
+    print(f"Alphabet: {sorted(nfa.alphabet)}")
+    print(f"Start state: {nfa.start_state}")
+    print(f"Final states: {sorted(nfa.final_states)}")
+
+    print("\n=== e-NFA Transition Table ===")
+    nfa.print_transition_table()
+
+
+def _print_dfa_summary(dfa: DFA, title: str) -> None:
+    """Print DFA components and transition table."""
+    print(f"\n=== {title} Components ===")
+    print(f"States: {sorted(dfa.states, key=str)}")
+    print(f"Alphabet: {sorted(dfa.alphabet)}")
+    print(f"Start state: {dfa.start_state}")
+    print(f"Final states: {sorted(dfa.final_states, key=str)}")
+
+    print(f"\n=== {title} Transition Table ===")
+    if not dfa.transitions:
+        print("(no transitions)")
+        return
+
+    for src in sorted(dfa.transitions, key=str):
+        for symbol, dst in sorted(dfa.transitions[src].items(), key=lambda item: item[0]):
+            print(f"{src} --{symbol}--> {dst}")
+
+
+def main() -> None:
+    """Run DFA demo: regex input -> e-NFA -> Reduced DFA and print results."""
+    from nfa import build_nfa_from_ast
+    from regex_parser import parse_regex
+
+    print("Reduced DFA demo")
+    regex = input("Enter regular expression: ").strip()
+
+    try:
+        ast = parse_regex(regex)
+        nfa = build_nfa_from_ast(ast)
+        reduced_dfa = rename_dfa_states(minimize_dfa(nfa_to_dfa(nfa)))
+    except ValueError as exc:
+        print(f"Build error: {exc}")
+        return
+
+    print("\n=== AST (nested list) ===")
+    print(ast.to_nested_list())
+
+    _print_nfa_summary(nfa)
+    _print_dfa_summary(reduced_dfa, title="Reduced DFA")
+
+
+if __name__ == "__main__":
+    main()
