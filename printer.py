@@ -23,7 +23,7 @@ def print_nfa(nfa: NFA) -> None:
     print("NFA alphabet:", sorted(nfa.alphabet))
     print("NFA start state:", nfa.start_state)
     print("NFA final states:", sorted(nfa.final_states))
-    print_transition_table(nfa)
+    nfa.print_transition_table()
 
 
 def print_dfa(dfa: DFA, title: str = "DFA") -> None:
