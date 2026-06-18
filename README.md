@@ -15,8 +15,11 @@ Formal Language 과목 과제를 위한 Python 프로젝트이다. 목표는 정
 - Thompson construction 기반 epsilon-NFA 생성이 구현되어 있다.
 - subset construction 기반 NFA -> DFA 변환이 구현되어 있다.
 - DFA unreachable state 제거가 구현되어 있다.
-- parser/NFA/DFA 테스트는 assert 기반으로 동작한다.
-- `minimize_dfa`, `rename_dfa_states`, `scan`, `trace_scan`은 아직 미구현이다.
+- DFA 최소화(`minimize_dfa`)가 구현되어 있다.
+- Reduced DFA 상태명 재할당(`rename_dfa_states`)이 구현되어 있다.
+- Scanner(`scan`, `trace_scan`)이 구현되어 있다.
+- parser/NFA/DFA/scanner 테스트는 assert 기반으로 동작한다.
+- main.py는 아직 미완성이다.
 
 ## Supported Regex Rules
 
@@ -192,7 +195,7 @@ a·A+b+0·c*
 ## Development Logging Rule
 
 - 개발 이력은 [LOG.md](LOG.md)에 날짜 순으로 누적 기록한다.
-- 이후 다른 채팅에서 작업하더라도 변경이 발생하면 반드시 [LOG.md](LOG.md)를 업데이트한다.
+- 이후 다른 채팅에서 작업하더라도 변경사항이 생길 때마다 즉시 [LOG.md](LOG.md)를 업데이트한다.
 - 권장 기록 포맷:
   - 변경 목적
   - 수정 파일

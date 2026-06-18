@@ -145,18 +145,124 @@ def remove_unreachable_states(dfa: DFA) -> DFA:
 def minimize_dfa(dfa: DFA) -> DFA:
     """Minimize a DFA to produce the Reduced DFA.
 
-    TODO:
-    - Choose a minimization algorithm, such as partition refinement.
-    - Preserve acceptance semantics while collapsing equivalent states.
+    Uses partition refinement to merge equivalent states while preserving the
+    recognized language.
     """
-    raise NotImplementedError("minimize_dfa() is not implemented yet.")
+    if dfa.start_state is None:
+        raise ValueError("DFA must have a start state")
+
+    working = remove_unreachable_states(dfa)
+    if not working.states:
+        return working
+
+    final_group = set(working.final_states)
+    non_final_group = set(working.states - working.final_states)
+
+    partitions: list[set[object]] = []
+    if final_group:
+        partitions.append(final_group)
+    if non_final_group:
+        partitions.append(non_final_group)
+
+    changed = True
+    while changed:
+        changed = False
+        new_partitions: list[set[object]] = []
+
+        state_to_partition: dict[object, int] = {}
+        for part_index, part in enumerate(partitions):
+            for state in part:
+                state_to_partition[state] = part_index
+
+        for part in partitions:
+            buckets: dict[tuple[object, ...], set[object]] = {}
+
+            for state in part:
+                signature: list[object] = []
+                for symbol in sorted(working.alphabet):
+                    next_state = working.transitions.get(state, {}).get(symbol)
+                    if next_state is None:
+                        signature.append(None)
+                    else:
+                        signature.append(state_to_partition[next_state])
+
+                bucket_key = tuple(signature)
+                buckets.setdefault(bucket_key, set()).add(state)
+
+            new_partitions.extend(buckets.values())
+            if len(buckets) > 1:
+                changed = True
+
+        partitions = new_partitions
+
+    minimized = DFA()
+    minimized.alphabet = working.alphabet.copy()
+
+    part_to_state: dict[int, frozenset[object]] = {}
+    state_to_min_state: dict[object, frozenset[object]] = {}
+
+    for part_index, part in enumerate(partitions):
+        min_state = frozenset(part)
+        part_to_state[part_index] = min_state
+        minimized.states.add(min_state)
+        for state in part:
+            state_to_min_state[state] = min_state
+
+    minimized.start_state = state_to_min_state[working.start_state]
+
+    for part in partitions:
+        representative = next(iter(part))
+        min_src_state = state_to_min_state[representative]
+
+        if any(state in working.final_states for state in part):
+            minimized.final_states.add(min_src_state)
+
+        for symbol, next_state in working.transitions.get(representative, {}).items():
+            min_dst_state = state_to_min_state[next_state]
+            minimized.transitions.setdefault(min_src_state, {})[symbol] = min_dst_state
+
+    return minimized
 
 
 def rename_dfa_states(dfa: DFA) -> DFA:
     """Rename DFA states to user-friendly labels such as D0, D1, D2.
 
-    TODO:
-    - Order states deterministically.
-    - Rebuild the transition table with renamed states.
+    Assigns D0 to the start state and explores remaining states via BFS,
+    assigning D1, D2, ... sequentially for deterministic, stable naming.
     """
-    raise NotImplementedError("rename_dfa_states() is not implemented yet.")
+    if dfa.start_state is None:
+        raise ValueError("DFA must have a start state")
+
+    renamed = DFA()
+    renamed.alphabet = dfa.alphabet.copy()
+
+    state_to_new_name: dict[object, str] = {}
+    new_name_counter = 0
+    queue: list[object] = [dfa.start_state]
+    visited: set[object] = {dfa.start_state}
+
+    state_to_new_name[dfa.start_state] = f"D{new_name_counter}"
+    new_name_counter += 1
+
+    while queue:
+        current_state = queue.pop(0)
+        for symbol in sorted(dfa.alphabet):
+            next_state = dfa.transitions.get(current_state, {}).get(symbol)
+            if next_state is None or next_state in visited:
+                continue
+            visited.add(next_state)
+            state_to_new_name[next_state] = f"D{new_name_counter}"
+            new_name_counter += 1
+            queue.append(next_state)
+
+    renamed.start_state = state_to_new_name[dfa.start_state]
+    renamed.states = {state_to_new_name[state] for state in dfa.states}
+    renamed.final_states = {state_to_new_name[state] for state in dfa.final_states}
+
+    for old_src, transitions_from_src in dfa.transitions.items():
+        new_src = state_to_new_name[old_src]
+        for symbol, old_dst in transitions_from_src.items():
+            new_dst = state_to_new_name[old_dst]
+            renamed.transitions.setdefault(new_src, {})[symbol] = new_dst
+
+    return renamed

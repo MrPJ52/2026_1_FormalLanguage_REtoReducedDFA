@@ -9,7 +9,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from dfa import nfa_to_dfa
+from dfa import minimize_dfa, nfa_to_dfa
 from nfa import build_nfa_from_ast
 from regex_parser import parse_regex
 
@@ -67,6 +67,42 @@ class DFASkeletonTests(unittest.TestCase):
                 self.assertFalse(
                     self._dfa_accepts(dfa, test_input),
                     f"DFA should reject '{test_input}'"
+                )
+
+    def test_minimize_dfa_preserves_language_and_reduces_states(self) -> None:
+        """Verify minimization preserves acceptance and merges equivalent states."""
+        regex = "a(b+c)*"
+        ast = parse_regex(regex)
+        nfa = build_nfa_from_ast(ast)
+        dfa = nfa_to_dfa(nfa)
+
+        minimized = minimize_dfa(dfa)
+
+        self.assertLess(
+            len(minimized.states),
+            len(dfa.states),
+            "Minimized DFA should have fewer states than the original DFA for this regex.",
+        )
+
+        samples = [
+            "",
+            "a",
+            "ab",
+            "ac",
+            "abc",
+            "acb",
+            "abcb",
+            "aa",
+            "ba",
+            "cab",
+        ]
+
+        for test_input in samples:
+            with self.subTest(input=test_input):
+                self.assertEqual(
+                    self._dfa_accepts(dfa, test_input),
+                    self._dfa_accepts(minimized, test_input),
+                    f"Minimization changed language behavior for '{test_input}'",
                 )
 
 

@@ -65,15 +65,24 @@ def main() -> None:
 		print("Stopping after minimization stage. Implement DFA minimization next.")
 		return
 
-	renamed_dfa = _run_stage("8. Rename Reduced DFA states", lambda: rename_dfa_states(reduced_dfa))
+	renamed_dfa = _run_stage("9. Rename Reduced DFA states", lambda: rename_dfa_states(reduced_dfa))
 	if renamed_dfa is None:
 		print("Stopping after state-renaming stage. Implement state renaming next.")
 		return
 
 	print_dfa(renamed_dfa, title="Reduced DFA")
 
-	test_input = input("Enter input string to scan: ")
-	_run_stage("9. Scanner trace", lambda: trace_scan(renamed_dfa, test_input))
+	print("\n=== 10. Scanner ===")
+	test_input = input("Enter input string to scan (or empty to skip): ").strip()
+	if test_input:
+		result = trace_scan(renamed_dfa, test_input)
+		if result:
+			print(f"Overall result: ACCEPT")
+		else:
+			print(f"Overall result: REJECT")
+	else:
+		print("No input provided, skipping scanner.")
+
 
 
 if __name__ == "__main__":
