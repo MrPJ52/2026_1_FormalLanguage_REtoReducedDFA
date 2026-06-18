@@ -108,11 +108,38 @@ def nfa_to_dfa(nfa: NFA) -> DFA:
 def remove_unreachable_states(dfa: DFA) -> DFA:
     """Return an equivalent DFA with unreachable states removed.
 
-    TODO:
-    - Traverse from the start state.
-    - Rebuild a filtered DFA preserving alphabet and transitions.
+    Traverse from the start state, keep only reachable states, and rebuild a
+    filtered DFA that preserves the original language.
     """
-    raise NotImplementedError("remove_unreachable_states() is not implemented yet.")
+    if dfa.start_state is None:
+        raise ValueError("DFA must have a start state")
+
+    reachable: set[object] = set()
+    queue: list[object] = [dfa.start_state]
+
+    while queue:
+        state = queue.pop(0)
+        if state in reachable:
+            continue
+        reachable.add(state)
+
+        for symbol, next_state in dfa.transitions.get(state, {}).items():
+            if next_state not in reachable:
+                queue.append(next_state)
+
+    filtered = DFA()
+    filtered.alphabet = dfa.alphabet.copy()
+    filtered.start_state = dfa.start_state
+    filtered.states = reachable.copy()
+    filtered.final_states = {state for state in dfa.final_states if state in reachable}
+
+    for state in reachable:
+        state_transitions = dfa.transitions.get(state, {})
+        for symbol, next_state in state_transitions.items():
+            if next_state in reachable:
+                filtered.transitions.setdefault(state, {})[symbol] = next_state
+
+    return filtered
 
 
 def minimize_dfa(dfa: DFA) -> DFA:

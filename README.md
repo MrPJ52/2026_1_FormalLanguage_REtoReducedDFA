@@ -12,8 +12,11 @@ Formal Language 과목 과제를 위한 Python 프로젝트이다. 목표는 정
 - 접속 연산 생략 입력을 내부적으로 명시적 연산자 `·`로 바꿀 수 있다.
 - shunting-yard 방식으로 postfix 변환 후 AST를 만든다.
 - AST size와 Thompson 상태 수, arc 수의 추정치 출력이 가능하다.
-- NFA, DFA, Reduced DFA, scanner 단계는 아직 구현 전이며 `NotImplementedError`와 `TODO`로 골격만 준비되어 있다.
-- 테스트 파일은 현재 `skip` 기반 골격이다.
+- Thompson construction 기반 epsilon-NFA 생성이 구현되어 있다.
+- subset construction 기반 NFA -> DFA 변환이 구현되어 있다.
+- DFA unreachable state 제거가 구현되어 있다.
+- parser/NFA/DFA 테스트는 assert 기반으로 동작한다.
+- `minimize_dfa`, `rename_dfa_states`, `scan`, `trace_scan`은 아직 미구현이다.
 
 ## Supported Regex Rules
 
@@ -183,5 +186,15 @@ a·A+b+0·c*
 ## Notes
 
 - 괄호는 AST에서 별도 노드로 만들지 않고 결합 구조만 조정한다.
-- NFA 이후 단계는 아직 intentionally incomplete 상태이다.
+- 최소화/스캐너 단계는 아직 intentionally incomplete 상태이다.
 - 앞으로 구현 순서는 [TODO.md](TODO.md)를 기준으로 진행하면 된다.
+
+## Development Logging Rule
+
+- 개발 이력은 [LOG.md](LOG.md)에 날짜 순으로 누적 기록한다.
+- 이후 다른 채팅에서 작업하더라도 변경이 발생하면 반드시 [LOG.md](LOG.md)를 업데이트한다.
+- 권장 기록 포맷:
+  - 변경 목적
+  - 수정 파일
+  - 핵심 변경점
+  - 검증 결과
