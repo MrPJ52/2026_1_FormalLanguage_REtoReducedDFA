@@ -155,6 +155,38 @@
   - 정규식 "a", 스캔 값 "ac" 테스트 결과: "REJECT" 정상 동작.
   - `python -m unittest discover -s tests -v` 전체 12개 테스트 통과.
 
+### Parser D3 AST 시각화 추가
+
+- 변경 목적:
+  - 과제 요구사항에 맞춰 parser 단독 실행 시 D3 tree 형태 AST 시각화 제공.
+- 수정 파일:
+  - `regex_parser.py`
+- 핵심 변경점:
+  - `_ast_to_d3_tree()` 추가: AST를 D3 hierarchy JSON 구조로 변환.
+  - `generate_d3_ast_html()` 추가: `ast_tree.html` 자동 생성.
+  - `main()` 실행 시 AST 출력 후 시각화 HTML 생성 및 기본 브라우저 자동 오픈.
+  - 브라우저 자동 오픈 실패 시 수동 오픈 안내 메시지 출력.
+- 검증 결과:
+  - `"a(b+c)*" | python regex_parser.py` 실행.
+  - AST nested list 출력 확인.
+  - `ast_tree.html` 생성 확인.
+  - 기본 브라우저 자동 오픈 확인.
+
+### README 최신 상태 동기화
+
+- 변경 목적:
+  - 실제 구현 상태와 README 문서 간 불일치 해소.
+- 수정 파일:
+  - `README.md`
+  - `LOG.md`
+- 핵심 변경점:
+  - `main.py` 전체 파이프라인 완성 상태 반영.
+  - `regex_parser.py` 단독 실행 + D3 시각화(`ast_tree.html`) 반영.
+  - NFA/DFA/scanner 설명을 TODO 중심에서 구현 완료 중심으로 수정.
+  - 테스트 섹션을 skeleton 안내에서 실제 12개 검증 상태로 수정.
+- 검증 결과:
+  - README 내용과 현재 코드(`main.py`, `regex_parser.py`, `nfa.py`, `dfa.py`, `scanner.py`, `tests/*`) 대조 확인.
+
 ## 현재 상태 요약
 
 완료:
@@ -167,6 +199,7 @@
 - Reduced DFA 상태명 변환
 - Scanner
 - main.py 완 파이프라인
+- parser D3 AST 시각화
 - parser/NFA/DFA/scanner 기본 테스트
 
 미완료:

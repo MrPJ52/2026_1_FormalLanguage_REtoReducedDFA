@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Regex AST D3 Tree</title>
+    <style>
+        :root {
+            --bg-1: #f4f9ff;
+            --bg-2: #fdf7f2;
+            --ink: #1f2a37;
+            --accent: #0d9488;
+            --node: #2563eb;
+            --leaf: #16a34a;
+            --edge: #64748b;
+        }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--ink);
+            background: radial-gradient(circle at 20% 20%, var(--bg-1) 0%, var(--bg-2) 100%);
+        }
+        header {
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(100, 116, 139, 0.25);
+        }
+        h1 { margin: 0; font-size: 1.1rem; }
+        p { margin: 6px 0 0; color: #475569; }
+        #tree { width: 100%; height: calc(100vh - 78px); }
+        .link { fill: none; stroke: var(--edge); stroke-width: 1.8px; }
+        .node circle { fill: var(--node); }
+        .node.leaf circle { fill: var(--leaf); }
+        .node text { font-size: 13px; fill: var(--ink); }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Regex AST Visualization (D3 Tree)</h1>
+        <p>Generated from regex_parser.py</p>
+    </header>
+    <svg id="tree"></svg>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        const data = {"name": "union (+)", "children": [{"name": "union (+)", "children": [{"name": "concat (·)", "children": [{"name": "literal: a", "children": []}, {"name": "literal: A", "children": []}]}, {"name": "literal: b", "children": []}]}, {"name": "concat (·)", "children": [{"name": "literal: 0", "children": []}, {"name": "star (*)", "children": [{"name": "literal: c", "children": []}]}]}]};
+
+        const svg = d3.select('#tree');
+        const width = window.innerWidth;
+        const height = window.innerHeight - 78;
+
+        svg.attr('viewBox', [0, 0, width, height]);
+
+        const root = d3.hierarchy(data);
+        const treeLayout = d3.tree().size([width - 80, height - 80]);
+        treeLayout(root);
+
+        const g = svg.append('g').attr('transform', 'translate(40, 40)');
+
+        g.selectAll('.link')
+            .data(root.links())
+            .enter()
+            .append('path')
+            .attr('class', 'link')
+            .attr('d', d3.linkVertical()
+                .x(d => d.x)
+                .y(d => d.y)
+            );
+
+        const node = g.selectAll('.node')
+            .data(root.descendants())
+            .enter()
+            .append('g')
+            .attr('class', d => 'node' + ((d.children && d.children.length) ? '' : ' leaf'))
+            .attr('transform', d => `translate(${d.x},${d.y})`);
+
+        node.append('circle').attr('r', 8);
+
+        node.append('text')
+            .attr('dy', -12)
+            .attr('text-anchor', 'middle')
+            .text(d => d.data.name);
+    </script>
+</body>
+</html>
